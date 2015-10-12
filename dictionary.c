@@ -46,23 +46,23 @@ bool check(const char* word)
         // deal with upper case
         if ((str >= 'A') && (str <= 'Z'))
         {
-            str += 32;
+            str = str + 32;
         }
         
         // apostrophe
-        if ((str = 39) || (str <= 'z' && str >= 'a'))
+        if ((str == 39) || (str <= 'z' && str >= 'a'))
         {
             if (str == 39)
             {
                 str = LENGTH + 'a';
             }
-            if (head->words[str + 'a'] == NULL)
+            if (head->words[str - 'a'] == NULL)
             {
                 return 0;
             }
             else
             {
-                head = head->words[str + 'a'];
+                head = head->words[str - 'a'];
             }
         }
         
