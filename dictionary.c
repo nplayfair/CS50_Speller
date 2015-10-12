@@ -11,65 +11,66 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <stdio.h>
-
+#include <string.h>
 #include "dictionary.h"
+
+// hash table
+int hash(const char *word);
+
+char word[LENGTH + 1];
+
 
 typedef struct node
     {
-        struct node* words[LENGTH + 1];
-        bool isWord;
+        char *word;
+        struct node *next;
     }
 node;
 
-struct node* first = {NULL};
+node *hasht[HASHTABLESIZE];
 
-// Global variables
 
 unsigned int dictionarySize = 0;
-char word[LENGTH + 1];
-
 
 /**
  * Returns true if word is in dictionary else false.
  */
 bool check(const char* word)
 {
-    // setup node
-    node* head = first;
-    int str = 0;
-    int index = 0;
+    char temp[LENGTH +1];
+    node* nodep;
     
-    while (str != '\0')
+    // Convert to all lower case
+    int length = strlen(word);
+    
+    for (int i = 0; i < length; i++)
     {
-        str = word[index];
-        
-        // deal with upper case
-        if ((str >= 'A') && (str <= 'Z'))
-        {
-            str = str + 32;
-        }
-        
-        // apostrophe
-        if ((str == 39) || (str <= 'z' && str >= 'a'))
-        {
-            if (str == 39)
-            {
-                str = LENGTH + 'a';
-            }
-            if (head->words[str - 'a'] == NULL)
-            {
-                return 0;
-            }
-            else
-            {
-                head = head->words[str - 'a'];
-            }
-        }
-        
-        index++;
+        int low = tolower(word[i]);
+        temp[i] = (char)low;
     }
     
-    return head->isWord;
+    // add null ending
+    temp[length] = '\0';
+    
+    int hashvalue = hash(word);
+    nodep = hasht[hashvalue];
+    if (!nodep)
+    {
+        //no node created
+        return false;
+    }
+    
+    //search the list of words in dict for the word passed in
+    while (nodep)
+    {
+        if (!strcmp(word,temp))
+        {
+            return true;
+        }
+        nodep = nodep->next;
+    }
+    // else not in list
+    return false; 
 }
 
 /**
@@ -78,49 +79,45 @@ bool check(const char* word)
 bool load(const char* dictionary)
 {
     // Load file
-    FILE* file = fopen(dictionary, "r"); //open dictionary file in read only mode
+    FILE* file = fopen(dictionary, "r");
     // Check loaded ok
     if (file == NULL)
     {
         return false;
     }
     
-    // allocate mem for first node
-    first = malloc(sizeof(node));
+    int hashvalue;
     
-    int str = 0;
-    node* temp = NULL;
+    // init hashtable
+    for (int i = 0; i < HASHTABLESIZE; i++)
+    {
+        hasht[i] = NULL;
+    }
     
     // loop through whole file
-    while (fgetc(file) != EOF)
+    while (fscanf(file,"%s\n",word) != EOF)
     {
-        fseek(file, -1, SEEK_CUR);
-        temp = first;
+        // insert word into a node
+        node *nodep = malloc(sizeof(node));
+        nodep->word = malloc(strlen(word)+1);
+        strcpy(nodep->word,word);
         
-        for  (  str = fgetc(file); str != '\n';
-                str = fgetc(file))
+        hashvalue = hash(word);
+        
+        dictionarySize++;
+        if (hasht[hashvalue] == NULL)
+        // insert at head of list
         {
-            // apostrophe
-            if (str == 39)
-            {
-                //put at the end
-                str = 'z' + 1;
-            }
-            if (temp->words[str - 'a'] == NULL)
-            {
-                temp->words[str - 'a'] = malloc(sizeof(node));
-                
-                // temp new node
-                temp = temp->words[str - 'a'];
-            }
-            else
-            {
-                temp = temp->words[str - 'a'];
-            }
+            hasht[hashvalue] = nodep;
+            nodep->next = NULL;
+        }
+        else
+        {
+            //insert node at head of list
+            nodep->next = hasht[hashvalue];
+            hasht[hashvalue] = nodep;
         }
         
-        temp->isWord =  true;
-        dictionarySize++;
     }
     // close file
     fclose(file);
@@ -138,20 +135,19 @@ unsigned int size(void)
 }
 
 /**
- helper function to recursively clear nodes
+ hash function
  */
  
- bool clearNode(node* currentNode)
+ int hash(const char* word)
  {
-    for (int i = 0; i < LENGTH; i++)
+    int length = strlen(word);
+    int hash = 0;
+    
+    for (int i = 0; i < length; i++)
     {
-        if (currentNode->words[i] != NULL)
-        {
-            clearNode(currentNode->words[i]);
-        }
+        hash += word[i];
     }
-    free(currentNode);
-    return true;
+    return hash%HASHTABLESIZE;
 }
 
 /**
@@ -159,5 +155,20 @@ unsigned int size(void)
  */
 bool unload(void)
 {
-    return clearNode(first);
+    node* nextnodep;
+    node* nodep;
+    for (int i = 0; i < HASHTABLESIZE; i++)
+    {
+        nodep = hasht[i];
+        while (nodep)
+        {
+            free(nodep->word);
+            nextnodep = nodep->next;
+            free(nodep);
+            nodep = nextnodep;
+        }
+        
+        hasht[i] = NULL;
+    }
+    return true;
 }
