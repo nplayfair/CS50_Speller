@@ -15,19 +15,19 @@
 #include "dictionary.h"
 
 // hash table
-int hash(const char *word);
+int hash(const char* word);
 
 char word[LENGTH + 1];
 
 
 typedef struct node
     {
-        char *word;
-        struct node *next;
+        char* word;
+        struct node* next;
     }
 node;
 
-node *hasht[HASHTABLESIZE];
+node* hasht[HASHTABLESIZE];
 
 
 unsigned int dictionarySize = 0;
@@ -37,22 +37,22 @@ unsigned int dictionarySize = 0;
  */
 bool check(const char* word)
 {
+    int wlength = strlen(word);
     char temp[LENGTH +1];
     node* nodep;
     
     // Convert to all lower case
-    int length = strlen(word);
     
-    for (int i = 0; i < length; i++)
+    for (int i = 0; i <= wlength; i++)
     {
-        int low = tolower(word[i]);
-        temp[i] = (char)low;
+        //int low = tolower(word[i]);
+        temp[i] = tolower(word[i]);
     }
     
     // add null ending
-    temp[length] = '\0';
+    temp[wlength] = '\0';
     
-    int hashvalue = hash(word);
+    int hashvalue = hash(temp);
     nodep = hasht[hashvalue];
     if (!nodep)
     {
@@ -63,13 +63,14 @@ bool check(const char* word)
     //search the list of words in dict for the word passed in
     while (nodep)
     {
-        if (!strcmp(word,temp))
+        if (!strcmp(nodep->word,temp))
         {
             return true;
         }
         nodep = nodep->next;
     }
     // else not in list
+    //printf( "%s not in dictionary.\n",word);
     return false; 
 }
 
@@ -103,6 +104,9 @@ bool load(const char* dictionary)
         strcpy(nodep->word,word);
         
         hashvalue = hash(word);
+        
+        //debug
+        //printf( "%s hash = %d\n",word,hashvalue);
         
         dictionarySize++;
         if (hasht[hashvalue] == NULL)
