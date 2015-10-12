@@ -141,10 +141,26 @@ unsigned int size(void)
 }
 
 /**
+ helper function to recursively clear nodes
+ */
+ 
+ bool clearNode(node* currentNode)
+ {
+    for (int i = 0; i < LENGTH; i++)
+    {
+        if (currentNode->words[i] != NULL)
+        {
+            clearNode(currentNode->words[i]);
+        }
+    }
+    free(currentNode);
+    return true;
+}
+
+/**
  * Unloads dictionary from memory.  Returns true if successful else false.
  */
 bool unload(void)
 {
-    // TODO
-    return false;
+    return clearNode(first);
 }
