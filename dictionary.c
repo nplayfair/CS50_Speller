@@ -121,15 +121,12 @@ bool load(const char* dictionary)
         
         temp->isWord =  true;
         dictionarySize++;
-        
-        // close file
-        fclose(file);
-        
-        //end
-        return true;
     }
+    // close file
+    fclose(file);
     
-    return false;
+    //end
+    return true; 
 }
 
 /**
